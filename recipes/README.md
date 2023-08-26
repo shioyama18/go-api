@@ -2,14 +2,34 @@
 
 ## Instructions
 
-### Starting MongoDB
+### Load data to MongoDB
 ```bash
-$ docker run -d --name mongodb \
+$ docker run -it --rm --name mongodb \
+    -v ~/mongo:/data/db \
+    -v $PWD/recipes.json:/tmp/recipes.json \
+    -e MONGO_INITDB_ROOT_USERNAME=admin \
+    -e MONGO_INITDB_ROOT_PASSWORD=password \
+    mongo:4.4.24 \
+    mongoimport -d demo -c recipes --file /tmp/recipes.json --drop
+```
+
+### Running MongoDB
+```bash
+$ docker run --rm -d --name mongodb \
     -v ~/mongo:/data/db \
     -e MONGO_INITDB_ROOT_USERNAME=admin \
     -e MONGO_INITDB_ROOT_PASSWORD=password \
     -p 27017:27017 \
     mongo:4.4.24
+```
+
+### Running Redis
+```bash
+$ docker run --rm -d --name redis \
+    -v $PWD/conf:/usr/local/etc/redis \
+    -p 6379:6379 \
+    redis:7.2 \
+    redis-server /usr/local/etc/redis/redis.conf
 ```
 
 ### Running the code
