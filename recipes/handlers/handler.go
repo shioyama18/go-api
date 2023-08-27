@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -256,4 +257,52 @@ func (h *RecipesHandler) GetOneRecipeHandler(c *gin.Context) {
 		json.Unmarshal([]byte(val), &recipe)
 		c.JSON(http.StatusOK, recipe)
 	}
+}
+
+// swagger:operation GET /recipes/search recipes findRecipe
+// Search recipes based on tags
+// ---
+// produces:
+// - application/json
+// parameters:
+//   - name: tag
+//     in: query
+//     description: recipe tag
+//     required: true
+//     type: string
+//
+// responses:
+//
+//	'200':
+//	    description: Successful operation
+//	'404':
+//	    description: Invalid tag
+func (h *RecipesHandler) SearchRecipesHandler(c *gin.Context) {
+	tag := c.Query("tag")
+	opts := options.Find().SetSort(bson.D{{Key: "name", Value: 1}})
+	filter := bson.M{"tags": bson.M{"$in": []string{tag}}}
+	cur, err := h.collection.Find(h.ctx, filter, opts)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	defer cur.Close(h.ctx)
+	recipes := make([]models.Recipe, 0)
+	for cur.Next(h.ctx) {
+		var recipe models.Recipe
+		cur.Decode(&recipe)
+		recipes = append(recipes, recipe)
+	}
+
+	if len(recipes) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": fmt.Sprintf("No recipe with tag '%s'", tag),
+		})
+	}
+
+	c.JSON(http.StatusOK, recipes)
 }
