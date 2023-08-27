@@ -13,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type RecipesHandler struct {
@@ -68,7 +69,6 @@ func (h *RecipesHandler) ListRecipeHandler(c *gin.Context) {
 		json.Unmarshal([]byte(val), &recipes)
 		c.JSON(http.StatusOK, recipes)
 	}
-
 }
 
 // swagger:operation POST /recipes recipes newRecipe
@@ -78,7 +78,7 @@ func (h *RecipesHandler) ListRecipeHandler(c *gin.Context) {
 // - application/json
 // responses:
 //
-//	'200':
+//	'201':
 //	    description: Successful operation
 //	'400':
 //	    description: Invalid input
@@ -100,9 +100,10 @@ func (h *RecipesHandler) NewRecipeHandler(c *gin.Context) {
 		})
 		return
 	}
-	log.Println("Invalidating cache")
+	data, _ := json.Marshal(recipe)
+	h.redisClient.Set(h.ctx, recipe.ID.String(), string(data), 1*time.Hour)
 	h.redisClient.Del(h.ctx, "recipes")
-	c.JSON(http.StatusOK, recipe)
+	c.JSON(http.StatusCreated, recipe.ID)
 }
 
 // swagger:operation PUT /recipes/{id} recipes updateRecipe
@@ -135,22 +136,31 @@ func (h *RecipesHandler) UpdateRecipeHandler(c *gin.Context) {
 	}
 	id := c.Param("id")
 	objectId, _ := primitive.ObjectIDFromHex(id)
-	_, err := h.collection.UpdateOne(h.ctx, bson.M{
-		"_id": objectId,
-	}, bson.D{{Key: "$set", Value: bson.D{
+	filter := bson.M{"_id": objectId}
+	update := bson.D{{Key: "$set", Value: bson.D{
 		{Key: "name", Value: recipe.Name},
 		{Key: "instructions", Value: recipe.Instructions},
 		{Key: "ingredients", Value: recipe.Ingredients},
 		{Key: "tags", Value: recipe.Tags},
-	}}})
+	}}}
+	opts := options.FindOneAndUpdate()
+	err := h.collection.FindOneAndUpdate(h.ctx, filter, update, opts)
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+	if err.Err() != nil {
+		if err.Err() == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Recipe not found",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Err().Error(),
+			})
+		}
 		return
 	}
-	log.Println("Invalidating cache")
+
+	data, _ := json.Marshal(recipe)
+	h.redisClient.Set(h.ctx, id, string(data), 1*time.Hour)
 	h.redisClient.Del(h.ctx, "recipes")
 	c.JSON(http.StatusOK, gin.H{"message": "Recipe has been updated"})
 }
@@ -176,18 +186,23 @@ func (h *RecipesHandler) UpdateRecipeHandler(c *gin.Context) {
 func (h *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	objectId, _ := primitive.ObjectIDFromHex(id)
-	_, err := h.collection.DeleteOne(h.ctx, bson.M{
-		"_id": objectId,
-	})
+	opts := options.FindOneAndDelete()
+	err := h.collection.FindOneAndDelete(h.ctx, bson.M{"_id": objectId}, opts)
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+	if err.Err() != nil {
+		if err.Err() == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Recipe not found",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Err().Error(),
+			})
+		}
 		return
 	}
 
-	log.Println("Invalidating cache")
+	h.redisClient.Del(h.ctx, id)
 	h.redisClient.Del(h.ctx, "recipes")
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Recipe has been deleted",
@@ -210,20 +225,35 @@ func (h *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 //
 //	'200':
 //	    description: Successful operation
+//	'404':
+//	    description: Invalid recipe ID
 func (h *RecipesHandler) GetOneRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
-	objectId, _ := primitive.ObjectIDFromHex(id)
-	cur := h.collection.FindOne(h.ctx, bson.M{
-		"_id": objectId,
-	})
-	var recipe models.Recipe
-	err := cur.Decode(&recipe)
-	if err != nil {
+	if val, err := h.redisClient.Get(h.ctx, id).Result(); err == redis.Nil {
+		log.Printf("Cache missed")
+		objectId, _ := primitive.ObjectIDFromHex(id)
+		cur := h.collection.FindOne(h.ctx, bson.M{
+			"_id": objectId,
+		})
+		var recipe models.Recipe
+		err := cur.Decode(&recipe)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		data, _ := json.Marshal(recipe)
+		h.redisClient.Set(h.ctx, id, string(data), 0)
+		c.JSON(http.StatusOK, recipe)
+	} else if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
-		return
+	} else {
+		log.Printf("Cache hit")
+		var recipe models.Recipe
+		json.Unmarshal([]byte(val), &recipe)
+		c.JSON(http.StatusOK, recipe)
 	}
-
-	c.JSON(http.StatusOK, recipe)
 }
