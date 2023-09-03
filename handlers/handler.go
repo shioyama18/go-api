@@ -194,7 +194,7 @@ func (h *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Recipe has been deleted"})
 }
 
-// swagger:operation GET /recipes/{id} recipes
+// swagger:operation GET /recipes/{id} recipes getRecipe
 // Get one recipe
 // ---
 // produces:

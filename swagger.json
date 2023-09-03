@@ -108,11 +108,13 @@
         "produces": [
           "application/json"
         ],
-        "operationId": "recipes",
+        "tags": [
+          "recipes"
+        ],
+        "operationId": "getRecipe",
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "Name",
             "description": "recipe ID",
             "name": "id",
             "in": "path",
@@ -157,6 +159,51 @@
             "required": true
           }
         ]
+      }
+    },
+    "/refresh": {
+      "post": {
+        "description": "Refresh token",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "operationId": "refresh"
+      }
+    },
+    "/signin": {
+      "post": {
+        "description": "Login with username and password",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "operationId": "signIn"
+      }
+    },
+    "/signout": {
+      "post": {
+        "description": "Signing out",
+        "tags": [
+          "auth"
+        ],
+        "operationId": "signOut"
+      }
+    },
+    "/signup": {
+      "post": {
+        "description": "Create user with username and password",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "auth"
+        ],
+        "operationId": "signUp"
       }
     }
   }
