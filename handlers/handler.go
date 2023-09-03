@@ -45,9 +45,7 @@ func (h *RecipesHandler) ListRecipeHandler(c *gin.Context) {
 		log.Printf("Cache missed")
 		cur, err := h.collection.Find(h.ctx, bson.M{})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		defer cur.Close(h.ctx)
@@ -61,9 +59,7 @@ func (h *RecipesHandler) ListRecipeHandler(c *gin.Context) {
 		h.redisClient.Set(h.ctx, "recipes", string(data), 0)
 		c.JSON(http.StatusOK, recipes)
 	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	} else {
 		log.Printf("Cache hit")
 		recipes := make([]models.Recipe, 0)
@@ -130,9 +126,7 @@ func (h *RecipesHandler) NewRecipeHandler(c *gin.Context) {
 func (h *RecipesHandler) UpdateRecipeHandler(c *gin.Context) {
 	var recipe models.Recipe
 	if err := c.ShouldBindJSON(&recipe); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	id := c.Param("id")
@@ -149,13 +143,9 @@ func (h *RecipesHandler) UpdateRecipeHandler(c *gin.Context) {
 
 	if err.Err() != nil {
 		if err.Err() == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Recipe not found",
-			})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Err().Error(),
-			})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Err().Error()})
 		}
 		return
 	}
@@ -192,22 +182,16 @@ func (h *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 
 	if err.Err() != nil {
 		if err.Err() == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Recipe not found",
-			})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Recipe not found"})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Err().Error(),
-			})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Err().Error()})
 		}
 		return
 	}
 
 	h.redisClient.Del(h.ctx, id)
 	h.redisClient.Del(h.ctx, "recipes")
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Recipe has been deleted",
-	})
+	c.JSON(http.StatusOK, gin.H{"message": "Recipe has been deleted"})
 }
 
 // swagger:operation GET /recipes/{id} recipes
@@ -239,9 +223,7 @@ func (h *RecipesHandler) GetOneRecipeHandler(c *gin.Context) {
 		var recipe models.Recipe
 		err := cur.Decode(&recipe)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		}
 		data, _ := json.Marshal(recipe)
@@ -284,9 +266,7 @@ func (h *RecipesHandler) SearchRecipesHandler(c *gin.Context) {
 	cur, err := h.collection.Find(h.ctx, filter, opts)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -299,9 +279,7 @@ func (h *RecipesHandler) SearchRecipesHandler(c *gin.Context) {
 	}
 
 	if len(recipes) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": fmt.Sprintf("No recipe with tag '%s'", tag),
-		})
+		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("No recipe with tag '%s'", tag)})
 	}
 
 	c.JSON(http.StatusOK, recipes)
