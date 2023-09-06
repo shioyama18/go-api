@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/go-api/recipes/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rs/xid"
+	"github.com/shioyama18/go-api/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

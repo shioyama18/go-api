@@ -1,4 +1,4 @@
-module github.com/go-api/recipes
+module github.com/shioyama18/go-api
 
 go 1.21.0
 

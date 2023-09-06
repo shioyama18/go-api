@@ -1,4 +1,5 @@
-# Sample code taken from "Building Distributed Applications in Gin"
+# go-api
+Sample code taken from "Building Distributed Applications in Gin"
 
 ## Instructions
 
@@ -36,7 +37,7 @@ $ docker run --rm -d --name redis \
 ```bash
 $ export MONGO_URI="mongodb://admin:password@localhost:27017/test?authSource=admin"
 $ export MONGO_DATABASE=demo
-$ go run main.go
+$ go run cmd/server/main.go
 ```
 
 ### Generating and running Swagger
