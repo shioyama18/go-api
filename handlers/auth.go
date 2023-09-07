@@ -96,6 +96,11 @@ func (handler *AuthHandler) SignUpHandler(c *gin.Context) {
 		return
 	}
 
+	if len(result) > 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "User already exists."})
+		return
+	}
+
 	h := sha256.New()
 	handler.collection.InsertOne(handler.ctx, bson.M{
 		"username": user.Username,

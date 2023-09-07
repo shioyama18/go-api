@@ -46,7 +46,7 @@ func init() {
 	collectionRecipe := client.Database(os.Getenv("MONGO_DATABASE")).Collection("recipes")
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     os.Getenv("REDIS_URI"),
 		Password: "",
 		DB:       0,
 	})
@@ -62,7 +62,7 @@ func init() {
 
 func main() {
 	router := gin.Default()
-	store, _ := redisStore.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
+	store, _ := redisStore.NewStore(10, "tcp", os.Getenv("REDIS_URI"), "", []byte("secret"))
 	router.Use(sessions.Sessions("recipes_api", store))
 	router.ForwardedByClientIP = true
 	router.SetTrustedProxies([]string{"127.0.0.1"})
