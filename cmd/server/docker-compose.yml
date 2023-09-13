@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  redis:
+    image: redis:7.2
+    ports:
+      - 6379:6379
+  mongodb:
+    image: mongo:4.4.24
+    networks:
+      - api_network
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+  import:
+    image: mongo:4.4.24
+    networks:
+      - api_network
+    volumes:
+      - $PWD/recipes_test.json:/tmp/recipes.json
+    command: mongoimport -h mongodb:27017 -u admin -p password --authenticationDatabase admin -d demo -c recipes --jsonArray --file /tmp/recipes.json --drop
+    depends_on:
+      - mongodb
+networks:
+  api_network:

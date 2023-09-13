@@ -60,7 +60,7 @@ func init() {
 	authHandler = handlers.NewAuthHandler(ctx, collectionUsers)
 }
 
-func main() {
+func SetupServer(auth bool) *gin.Engine {
 	router := gin.Default()
 	store, _ := redisStore.NewStore(10, "tcp", os.Getenv("REDIS_URI"), "", []byte("secret"))
 	router.Use(sessions.Sessions("recipes_api", store))
@@ -72,12 +72,17 @@ func main() {
 	router.POST("/signout", authHandler.SignOutHandler)
 	router.POST("/refresh", authHandler.RefreshHandler)
 	authorized := router.Group("/")
-	authorized.Use(authHandler.AuthMiddleware())
-
+	if auth {
+		authorized.Use(authHandler.AuthMiddleware())
+	}
 	authorized.POST("/recipes", recipesHandler.NewRecipeHandler)
 	authorized.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
 	authorized.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
-	authorized.GET("/recipes/:id", recipesHandler.GetOneRecipeHandler)
+	authorized.GET("/recipes/:id", recipesHandler.FindRecipeHandler)
 	authorized.GET("/recipes/search", recipesHandler.SearchRecipesHandler)
-	router.Run(":8080")
+	return router
+}
+
+func main() {
+	SetupServer(true).Run(":8080")
 }

@@ -29,7 +29,6 @@ services:
       - 27017:27017
     volumes:
       - $PWD/data:/data/db
-      - $PWD/conf/recipes.json:/tmp/recipes.json
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password
@@ -40,9 +39,6 @@ services:
     volumes:
       - $PWD/data:/data/db
       - $PWD/conf/recipes.json:/tmp/recipes.json
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
     command: mongoimport -h mongodb:27017 -u admin -p password --authenticationDatabase admin -d demo -c recipes --jsonArray --file /tmp/recipes.json --drop
     depends_on:
       - mongodb

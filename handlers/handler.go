@@ -212,7 +212,7 @@ func (h *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 //	    description: Successful operation
 //	'404':
 //	    description: Invalid recipe ID
-func (h *RecipesHandler) GetOneRecipeHandler(c *gin.Context) {
+func (h *RecipesHandler) FindRecipeHandler(c *gin.Context) {
 	id := c.Param("id")
 	if val, err := h.redisClient.Get(h.ctx, id).Result(); err == redis.Nil {
 		log.Printf("Cache missed")
