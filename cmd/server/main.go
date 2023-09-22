@@ -23,6 +23,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	redisStore "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"github.com/shioyama18/go-api/handlers"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -71,6 +72,7 @@ func SetupServer(auth bool) *gin.Engine {
 	router.POST("/signup", authHandler.SignUpHandler)
 	router.POST("/signout", authHandler.SignOutHandler)
 	router.POST("/refresh", authHandler.RefreshHandler)
+	router.GET("/prometheus", gin.WrapH(promhttp.Handler()))
 	authorized := router.Group("/")
 	if auth {
 		authorized.Use(authHandler.AuthMiddleware())
