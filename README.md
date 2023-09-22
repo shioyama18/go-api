@@ -5,7 +5,7 @@ Sample code taken from "Building Distributed Applications in Gin"
 
 ### Running the code
 ```bash
-$ docker build -t api
+$ docker build -t api .
 $ docker-compose up -d
 ```
 
